@@ -7,6 +7,14 @@
 .skaffold-*.yaml
 .terraform.lock.hcl
 .terraform/*
+*.tfplan
+tfplan
+kubeconfig
+kubeconfig.*
+*.tfplan
+tfplan
+kubeconfig
+kubeconfig.*
 .venv/
 .vs/
 .vscode/
