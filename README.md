@@ -3,14 +3,20 @@
 </p> -->
 ![Continuous Integration](https://github.com/GoogleCloudPlatform/microservices-demo/workflows/Continuous%20Integration%20-%20Main/Release/badge.svg)
 
-**Online Boutique** is a cloud-first microservices demo application.  The application is a
-web-based e-commerce app where users can browse items, add them to the cart, and purchase them.
+**Online Boutique** is a cloud-first microservices demo application. The
+application is a web-based e-commerce shop: browse items, add them to a cart,
+and check out.
 
-Google uses this application to demonstrate how developers can modernize enterprise applications using Google Cloud products, including: [Google Kubernetes Engine (GKE)](https://cloud.google.com/kubernetes-engine), [Cloud Service Mesh (CSM)](https://cloud.google.com/service-mesh), [gRPC](https://grpc.io/), [Cloud Operations](https://cloud.google.com/products/operations), [Spanner](https://cloud.google.com/spanner), [Memorystore](https://cloud.google.com/memorystore), [AlloyDB](https://cloud.google.com/alloydb), and [Gemini](https://ai.google.dev/). This application works on any Kubernetes cluster.
+This repository is a fork of
+[GoogleCloudPlatform/microservices-demo](https://github.com/GoogleCloudPlatform/microservices-demo)
+with upstream GCP deployment tooling removed (Helm, Kustomize, Terraform, Cloud
+Build, DeployStack). Application source in [`src/`](./src) and the gRPC contract
+in [`protos/`](./protos) are unchanged. The goal is to rebuild packaging, CI,
+Azure infrastructure, GitOps, and observability from scratch.
 
-If you’re using this demo, please **★Star** this repository to show your interest!
-
-**Note to Googlers:** Please fill out the form at [go/microservices-demo](http://go/microservices-demo).
+**Read this first if you need to explain the shop in an interview:**
+[Storefront breakdown](./docs/storefront-breakdown.md) — Add to Cart, checkout,
+service discovery (DNS + env vars), and what happens when a backend dies.
 
 ## Architecture
 
@@ -35,6 +41,11 @@ Find **Protocol Buffers Descriptions** at the [`./protos` directory](/protos).
 | [recommendationservice](/src/recommendationservice) | Python        | Recommends other products based on what's given in the cart.                                                                      |
 | [adservice](/src/adservice)                         | Java          | Provides text ads based on given context words.                                                                                   |
 | [loadgenerator](/src/loadgenerator)                 | Python/Locust | Continuously sends requests imitating realistic user shopping flows to the frontend.                                              |
+
+The browser talks **HTTP to `frontend` only**. Every other arrow on the diagram
+is **gRPC**. How those calls are wired, which ones are on the critical path,
+and the Redis protobuf cart format are in
+[docs/storefront-breakdown.md](./docs/storefront-breakdown.md).
 
 ## Screenshots
 
@@ -115,7 +126,9 @@ Find **Protocol Buffers Descriptions** at the [`./protos` directory](/protos).
 
    Visit `http://EXTERNAL_IP` in a web browser to access your instance of Online Boutique.
 
-8. Congrats! You've deployed the default Online Boutique. To deploy a different variation of Online Boutique (e.g., with Google Cloud Operations tracing, Istio, etc.), see [Deploy Online Boutique variations with Kustomize](#deploy-online-boutique-variations-with-kustomize).
+8. Congrats! You've deployed the default Online Boutique. For how a click
+   in that UI fans out across gRPC services, see the
+   [storefront breakdown](./docs/storefront-breakdown.md).
 
 9. Once you are done with it, delete the GKE cluster.
 
@@ -128,14 +141,21 @@ Find **Protocol Buffers Descriptions** at the [`./protos` directory](/protos).
 
 ## Additional deployment options
 
-- **Terraform**: [See these instructions](/terraform) to learn how to deploy Online Boutique using [Terraform](https://www.terraform.io/intro).
-- **Istio / Cloud Service Mesh**: [See these instructions](/kustomize/components/service-mesh-istio/README.md) to deploy Online Boutique alongside an Istio-backed service mesh.
-- **Non-GKE clusters (Minikube, Kind, etc)**: See the [Development guide](/docs/development-guide.md) to learn how you can deploy Online Boutique on non-GKE clusters.
-- **AI assistant using Gemini**: [See these instructions](/kustomize/components/shopping-assistant/README.md) to deploy a Gemini-powered AI assistant that suggests products to purchase based on an image.
-- **And more**: The [`/kustomize` directory](/kustomize) contains instructions for customizing the deployment of Online Boutique with other variations.
+Upstream GCP-specific Terraform, Kustomize, Helm, and Istio trees were removed
+from this fork. What remains for a first deploy:
+
+- **Any Kubernetes cluster (kind, minikube, AKS, GKE):** apply
+  [`release/kubernetes-manifests.yaml`](./release/kubernetes-manifests.yaml).
+  It points at Google's prebuilt images so the shop comes up without building
+  all 11 services. On kind, port-forward the frontend instead of waiting for
+  `frontend-external`'s LoadBalancer.
+- **Local iteration from source:** [Development guide](/docs/development-guide.md)
+  (`skaffold.yaml` is still in the repo).
+- **How the running shop behaves:** [Storefront breakdown](./docs/storefront-breakdown.md).
 
 ## Documentation
 
+- [Storefront breakdown](/docs/storefront-breakdown.md) — request flows, service discovery, and failure modes.
 - [Development](/docs/development-guide.md) to learn how to run and develop this app locally.
 
 ## Demos featuring Online Boutique
