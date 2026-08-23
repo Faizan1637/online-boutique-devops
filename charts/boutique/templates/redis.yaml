@@ -5,6 +5,7 @@ metadata:
   name: redis-cart
   labels:
     app: redis-cart
+    {{- include "boutique.labels" . | nindent 4 }}
 spec:
   replicas: {{ $redis.replicas }}
   selector:
@@ -14,6 +15,7 @@ spec:
     metadata:
       labels:
         app: redis-cart
+        {{- include "boutique.selectorLabels" (dict "root" . "name" "redis-cart") | nindent 8 }}
     spec:
       securityContext:
         fsGroup: 1000
@@ -60,6 +62,7 @@ metadata:
   name: redis-cart
   labels:
     app: redis-cart
+    {{- include "boutique.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:

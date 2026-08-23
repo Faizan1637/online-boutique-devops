@@ -1,0 +1,1 @@
+{{ include "boutique.microservice" (dict "root" . "name" "adservice") }}
