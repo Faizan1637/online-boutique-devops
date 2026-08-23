@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  replicas: {{ .Values.services.frontend.replicas }}
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: server
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+          image: "{{ .Values.image.registry }}/frontend:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.services.frontend.containerPort }}
+          env:
+            {{- range $key, $value := .Values.frontendEnv }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          readinessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              path: /_healthz
+              port: {{ .Values.services.frontend.containerPort }}
+              httpHeaders:
+                - name: Cookie
+                  value: shop_session-id=x-readiness-probe
+          livenessProbe:
+            initialDelaySeconds: 10
+            httpGet:
+              path: /_healthz
+              port: {{ .Values.services.frontend.containerPort }}
+              httpHeaders:
+                - name: Cookie
+                  value: shop_session-id=x-liveness-probe
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  labels:
+    app: frontend
+spec:
+  type: {{ .Values.services.frontend.type }}
+  selector:
+    app: frontend
+  ports:
+    - name: http
+      port: {{ .Values.services.frontend.servicePort }}
+      targetPort: {{ .Values.services.frontend.containerPort }}
