@@ -4,6 +4,7 @@ metadata:
   name: cartservice
   labels:
     app: cartservice
+    {{- include "boutique.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.services.cartservice.replicas }}
   selector:
@@ -13,6 +14,7 @@ spec:
     metadata:
       labels:
         app: cartservice
+        {{- include "boutique.selectorLabels" (dict "root" . "name" "cartservice") | nindent 8 }}
     spec:
       terminationGracePeriodSeconds: 5
       securityContext:
@@ -29,13 +31,15 @@ spec:
                 - ALL
             privileged: false
             readOnlyRootFilesystem: true
-          image: "{{ .Values.image.registry }}/cartservice:{{ .Values.image.tag }}"
+          image: {{ include "boutique.image" (dict "root" . "name" "cartservice") | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.services.cartservice.containerPort }}
           env:
-            - name: REDIS_ADDR
-              value: {{ .Values.services.cartservice.env.REDIS_ADDR | quote }}
+            {{- range $k, $v := .Values.services.cartservice.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
           resources:
             requests:
               cpu: 200m
@@ -59,6 +63,7 @@ metadata:
   name: cartservice
   labels:
     app: cartservice
+    {{- include "boutique.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:

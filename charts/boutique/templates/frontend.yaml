@@ -4,6 +4,7 @@ metadata:
   name: frontend
   labels:
     app: frontend
+    {{- include "boutique.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.services.frontend.replicas }}
   selector:
@@ -13,6 +14,7 @@ spec:
     metadata:
       labels:
         app: frontend
+        {{- include "boutique.selectorLabels" (dict "root" . "name" "frontend") | nindent 8 }}
     spec:
       securityContext:
         fsGroup: 1000
@@ -28,7 +30,7 @@ spec:
                 - ALL
             privileged: false
             readOnlyRootFilesystem: true
-          image: "{{ .Values.image.registry }}/frontend:{{ .Values.image.tag }}"
+          image: {{ include "boutique.image" (dict "root" . "name" "frontend") | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ .Values.services.frontend.containerPort }}
@@ -67,6 +69,7 @@ metadata:
   name: frontend
   labels:
     app: frontend
+    {{- include "boutique.labels" . | nindent 4 }}
 spec:
   type: {{ .Values.services.frontend.type }}
   selector:
