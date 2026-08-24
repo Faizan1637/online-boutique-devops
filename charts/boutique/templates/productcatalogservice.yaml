@@ -1,19 +1,21 @@
+{{- $svc := .Values.services.productcatalogservice }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: productcatalogservice
   labels:
     app: productcatalogservice
+    {{- include "boutique.labels" . | nindent 4 }}
 spec:
+  replicas: {{ $svc.replicas }}
   selector:
     matchLabels:
       app: productcatalogservice
   template:
     metadata:
       labels:
-        app: productcatalogservice
+        {{- include "boutique.selectorLabels" (dict "root" . "name" "productcatalogservice") | nindent 8 }}
     spec:
-      serviceAccountName: productcatalogservice
       terminationGracePeriodSeconds: 5
       securityContext:
         fsGroup: 1000
@@ -21,35 +23,31 @@ spec:
         runAsNonRoot: true
         runAsUser: 1000
       containers:
-      - name: server
-        securityContext:
-          allowPrivilegeEscalation: false
-          capabilities:
-            drop:
-              - ALL
-          privileged: false
-          readOnlyRootFilesystem: true
-        image: us-central1-docker.pkg.dev/online-boutique-ci/microservices-demo/productcatalogservice:v0.10.6
-        ports:
-        - containerPort: 3550
-        env:
-        - name: PORT
-          value: "3550"
-        - name: DISABLE_PROFILER
-          value: "1"
-        readinessProbe:
-          grpc:
-            port: 3550
-        livenessProbe:
-          grpc:
-            port: 3550
-        resources:
-          requests:
-            cpu: 100m
-            memory: 64Mi
-          limits:
-            cpu: 200m
-            memory: 128Mi
+        - name: server
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+          image: {{ include "boutique.image" (dict "root" . "name" "productcatalogservice") | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ $svc.containerPort }}
+          env:
+            {{- range $key, $value := $svc.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
+          readinessProbe:
+            grpc:
+              port: {{ $svc.containerPort }}
+          livenessProbe:
+            grpc:
+              port: {{ $svc.containerPort }}
+          resources:
+            {{- toYaml .Values.defaults.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
@@ -57,11 +55,12 @@ metadata:
   name: productcatalogservice
   labels:
     app: productcatalogservice
+    {{- include "boutique.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
     app: productcatalogservice
   ports:
-  - name: grpc
-    port: 3550
-    targetPort: 3550
+    - name: grpc
+      port: {{ $svc.servicePort }}
+      targetPort: {{ $svc.containerPort }}

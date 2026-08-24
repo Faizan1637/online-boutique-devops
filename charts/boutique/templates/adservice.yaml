@@ -1,20 +1,20 @@
-{{- $svc := .Values.services.recommendationservice }}
+{{- $svc := .Values.services.adservice }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: recommendationservice
+  name: adservice
   labels:
-    app: recommendationservice
+    app: adservice
     {{- include "boutique.labels" . | nindent 4 }}
 spec:
   replicas: {{ $svc.replicas }}
   selector:
     matchLabels:
-      app: recommendationservice
+      app: adservice
   template:
     metadata:
       labels:
-        {{- include "boutique.selectorLabels" (dict "root" . "name" "recommendationservice") | nindent 8 }}
+        {{- include "boutique.selectorLabels" (dict "root" . "name" "adservice") | nindent 8 }}
     spec:
       terminationGracePeriodSeconds: 5
       securityContext:
@@ -31,7 +31,7 @@ spec:
                 - ALL
             privileged: false
             readOnlyRootFilesystem: true
-          image: {{ include "boutique.image" (dict "root" . "name" "recommendationservice") | quote }}
+          image: {{ include "boutique.image" (dict "root" . "name" "adservice") | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ $svc.containerPort }}
@@ -41,10 +41,12 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           readinessProbe:
+            initialDelaySeconds: {{ $svc.probe.initialDelaySeconds }}
             periodSeconds: {{ $svc.probe.periodSeconds }}
             grpc:
               port: {{ $svc.containerPort }}
           livenessProbe:
+            initialDelaySeconds: {{ $svc.probe.initialDelaySeconds }}
             periodSeconds: {{ $svc.probe.periodSeconds }}
             grpc:
               port: {{ $svc.containerPort }}
@@ -54,14 +56,14 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: recommendationservice
+  name: adservice
   labels:
-    app: recommendationservice
+    app: adservice
     {{- include "boutique.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
-    app: recommendationservice
+    app: adservice
   ports:
     - name: grpc
       port: {{ $svc.servicePort }}

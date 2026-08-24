@@ -1,6 +1,6 @@
 apiVersion: v2
 name: boutique
-description: Online Boutique — values-driven chart (Helm you wrote, not Google's)
+description: Online Boutique — values-driven chart 
 
 # A chart can be either an 'application' or a 'library' chart.
 #

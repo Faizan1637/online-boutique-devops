@@ -6,6 +6,7 @@ image:
   tag: v0.10.6
   pullPolicy: IfNotPresent
 
+# Applied to any templated service that does not set its own `resources`.
 defaults:
   resources:
     requests:
@@ -13,7 +14,7 @@ defaults:
       memory: 64Mi
     limits:
       cpu: 200m
-      memory: 256Mi
+      memory: 128Mi
 
 # Frontend mustMapEnv — required at process start, even if that Service
 # is not deployed (SHOPPING_ASSISTANT_SERVICE_ADDR). Do not set ENABLE_ASSISTANT.
@@ -38,8 +39,17 @@ checkoutEnv:
   CURRENCY_SERVICE_ADDR: "currencyservice:7000"
   CART_SERVICE_ADDR: "cartservice:7070"
 
-# template: false → dedicated file (frontend / cart / redis).
-# template: true  → rendered by templates/<name> via boutique.microservice.
+# template: false → dedicated file (frontend / cart / redis), which also
+#                   defines its own probes and resources.
+# template: true  → rendered by templates/<name>.yaml via boutique.microservice.
+#
+# For templated services:
+#   probe.type            grpc (default) | tcp
+#   probe.*Seconds        optional timing overrides
+#   resources             optional; falls back to defaults.resources
+#   env                   inline map of environment variables
+#   envFrom              name of a top-level map to use instead of env
+#
 # loadgenerator stays off on a 2-CPU kind cluster.
 services:
   frontend:
@@ -48,7 +58,6 @@ services:
     containerPort: 8080
     servicePort: 80
     type: ClusterIP
-    probe: http
   cartservice:
     template: false
     replicas: 1
@@ -83,6 +92,16 @@ services:
     replicas: 1
     containerPort: 8080
     servicePort: 8080
+    probe:
+      periodSeconds: 5
+    # Python service — needs materially more memory than the default.
+    resources:
+      requests:
+        cpu: 100m
+        memory: 220Mi
+      limits:
+        cpu: 200m
+        memory: 450Mi
     env:
       PORT: "8080"
       PRODUCT_CATALOG_SERVICE_ADDR: "productcatalogservice:3550"
@@ -92,11 +111,14 @@ services:
     replicas: 1
     containerPort: 5050
     servicePort: 5050
+    envFrom: checkoutEnv
   shippingservice:
     template: true
     replicas: 1
     containerPort: 50051
     servicePort: 50051
+    probe:
+      periodSeconds: 5
     env:
       PORT: "50051"
       DISABLE_PROFILER: "1"
@@ -113,6 +135,9 @@ services:
     replicas: 1
     containerPort: 8080
     servicePort: 5000
+    probe:
+      initialDelaySeconds: 15
+      periodSeconds: 5
     env:
       PORT: "8080"
       DISABLE_PROFILER: "1"
@@ -121,6 +146,17 @@ services:
     replicas: 1
     containerPort: 9555
     servicePort: 9555
+    probe:
+      initialDelaySeconds: 20
+      periodSeconds: 15
+    # JVM service — slowest to start and the heaviest of the backends.
+    resources:
+      requests:
+        cpu: 200m
+        memory: 180Mi
+      limits:
+        cpu: 300m
+        memory: 300Mi
     env:
       PORT: "9555"
   loadgenerator:

@@ -1,22 +1,21 @@
-{{- $svc := .Values.services.recommendationservice }}
+{{- $svc := .Values.services.shippingservice }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: recommendationservice
+  name: shippingservice
   labels:
-    app: recommendationservice
+    app: shippingservice
     {{- include "boutique.labels" . | nindent 4 }}
 spec:
   replicas: {{ $svc.replicas }}
   selector:
     matchLabels:
-      app: recommendationservice
+      app: shippingservice
   template:
     metadata:
       labels:
-        {{- include "boutique.selectorLabels" (dict "root" . "name" "recommendationservice") | nindent 8 }}
+        {{- include "boutique.selectorLabels" (dict "root" . "name" "shippingservice") | nindent 8 }}
     spec:
-      terminationGracePeriodSeconds: 5
       securityContext:
         fsGroup: 1000
         runAsGroup: 1000
@@ -31,7 +30,7 @@ spec:
                 - ALL
             privileged: false
             readOnlyRootFilesystem: true
-          image: {{ include "boutique.image" (dict "root" . "name" "recommendationservice") | quote }}
+          image: {{ include "boutique.image" (dict "root" . "name" "shippingservice") | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - containerPort: {{ $svc.containerPort }}
@@ -49,19 +48,19 @@ spec:
             grpc:
               port: {{ $svc.containerPort }}
           resources:
-            {{- toYaml $svc.resources | nindent 12 }}
+            {{- toYaml .Values.defaults.resources | nindent 12 }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: recommendationservice
+  name: shippingservice
   labels:
-    app: recommendationservice
+    app: shippingservice
     {{- include "boutique.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   selector:
-    app: recommendationservice
+    app: shippingservice
   ports:
     - name: grpc
       port: {{ $svc.servicePort }}
