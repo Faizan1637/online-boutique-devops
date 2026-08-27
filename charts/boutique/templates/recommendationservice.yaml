@@ -41,10 +41,14 @@ spec:
               value: {{ $value | quote }}
             {{- end }}
           readinessProbe:
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
             periodSeconds: {{ $svc.probe.periodSeconds }}
             grpc:
               port: {{ $svc.containerPort }}
           livenessProbe:
+            initialDelaySeconds: 15
+            timeoutSeconds: 5
             periodSeconds: {{ $svc.probe.periodSeconds }}
             grpc:
               port: {{ $svc.containerPort }}
