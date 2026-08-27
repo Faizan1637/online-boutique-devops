@@ -2,8 +2,8 @@
 # Change image.tag / replicas / env here — do not edit templates for that.
 
 image:
-  registry: us-central1-docker.pkg.dev/online-boutique-ci/microservices-demo
-  tag: v0.10.6
+  registry: ghcr.io/faizan1637/online-boutique-devops
+  tag: cba2d7c63f130d009f6a70143d7e83bf9652bd26
   pullPolicy: IfNotPresent
 
 # Applied to any templated service that does not set its own `resources`.
