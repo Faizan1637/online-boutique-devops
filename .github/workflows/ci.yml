@@ -1,0 +1,75 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+      - name: Go unit tests
+        run: |
+          (cd src/shippingservice && go test ./...)
+          (cd src/productcatalogservice && go test ./...)
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0"
+      - name: cartservice tests
+        run: dotnet test src/cartservice/
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: frontend
+            context: src/frontend
+          - service: cartservice
+            context: src/cartservice/src
+          - service: productcatalogservice
+            context: src/productcatalogservice
+          - service: currencyservice
+            context: src/currencyservice
+          - service: paymentservice
+            context: src/paymentservice
+          - service: shippingservice
+            context: src/shippingservice
+          - service: emailservice
+            context: src/emailservice
+          - service: checkoutservice
+            context: src/checkoutservice
+          - service: recommendationservice
+            context: src/recommendationservice
+          - service: adservice
+            context: src/adservice
+          - service: loadgenerator
+            context: src/loadgenerator
+    steps:
+      - uses: actions/checkout@v4
+      - name: Lowercase image name
+        run: |
+          owner=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
+          repo=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
+          echo "IMAGE=ghcr.io/${owner}/${repo}/${{ matrix.service }}" >> "$GITHUB_ENV"
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ env.IMAGE }}:${{ github.sha }}
