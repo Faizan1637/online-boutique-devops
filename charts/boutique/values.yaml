@@ -54,7 +54,7 @@ checkoutEnv:
 services:
   frontend:
     template: false
-    replicas: 1
+    replicas: 2
     containerPort: 8080
     servicePort: 80
     type: ClusterIP
