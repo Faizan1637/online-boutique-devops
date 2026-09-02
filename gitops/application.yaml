@@ -1,0 +1,26 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: boutique
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Faizan1637/online-boutique-devops.git
+    targetRevision: main
+    path: charts/boutique
+    helm:
+      valueFiles:
+        - values.yaml
+      parameters:
+        - name: services.frontend.type
+          value: LoadBalancer
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: boutique
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
