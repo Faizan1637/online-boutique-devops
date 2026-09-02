@@ -24,5 +24,5 @@ variable "node_count" {
 variable "node_size" {
   type        = string
   description = "Keep B2s unless quota forces Standard_B1s"
-  default     = "Standard_B2ms"
+  default     = "Standard_D2s_v3"
 }
